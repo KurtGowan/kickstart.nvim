@@ -8,6 +8,8 @@ return { -- Highlight, edit, and navigate code
       'diff',
       'html',
       'lua',
+      'java',
+      'kotlin',
       'javascript',
       'go',
       'luadoc',

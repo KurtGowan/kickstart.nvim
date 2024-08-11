@@ -5,6 +5,9 @@ vim.g.maplocalleader = ' '
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
+-- Make cursor block in insert mode
+vim.opt.guicursor = 'n-v-i-c:block-Cursor,i:blinkwait300-blinkon200-blinkoff150'
+
 -- Make line numbers default
 vim.opt.number = true
 vim.opt.relativenumber = true

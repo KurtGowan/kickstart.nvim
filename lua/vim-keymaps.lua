@@ -31,4 +31,4 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 vim.keymap.set('n', '<leader>n', ':Neotree filesystem reveal left<CR>')
 
 vim.keymap.set('n', '<C-j>', 'cnext', { desc = 'Move to next Quickfix List item' })
-vim.keymap.set('n', '<C-k>', 'cprev', { desc = 'Move to next Quickfix List item' })
+vim.keymap.set('n', '<C-k>', 'cprev', { desc = 'Move to previous Quickfix List item' })

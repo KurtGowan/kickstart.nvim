@@ -1,3 +1,4 @@
+local slow_format_filetypes = {}
 return {
   'tpope/vim-sleuth',
   { 'Bilal2453/luvit-meta', lazy = true },
@@ -35,7 +36,9 @@ return {
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
 
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          map('gd', function()
+            require('telescope.builtin').lsp_definitions { jump_type = 'vsplit' }
+          end, '[G]oto [D]efinition')
           map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
           map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
           map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
@@ -83,15 +86,8 @@ return {
       local servers = {
         gopls = {},
         kotlin_language_server = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`tsserver`) will work just fine
+        gradle_ls = {},
         tsserver = {},
-        --
-
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -117,6 +113,7 @@ return {
         'black',
         'prettierd',
         'gopls',
+        'ktfmt',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -131,7 +128,7 @@ return {
             require('lspconfig')[server_name].setup(server)
           end,
         },
-        ensure_installed = { 'tsserver', 'gopls' },
+        ensure_installed = { 'tsserver', 'gopls', 'kotlin_language_server', 'gradle_ls' },
       }
     end,
   },
@@ -145,24 +142,41 @@ return {
         function()
           require('conform').format { async = true, lsp_fallback = true }
         end,
-        mode = '',
+        mode = { 'n', 'v' },
         desc = '[F]ormat buffer',
       },
     },
     opts = {
       notify_on_error = false,
       format_on_save = function(bufnr)
+        if slow_format_filetypes[vim.bo[bufnr].filetype] then
+          return
+        end
+        local function on_format(err)
+          if err and err:match 'timeout$' then
+            slow_format_filetypes[vim.bo[bufnr].filetype] = true
+          end
+        end
         local disable_filetypes = { c = true, cpp = true }
         return {
-          timeout_ms = 500,
+          lsp_format = 'fallback',
+          timeout_ms = 200,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
-        }
+        },
+          on_format
+      end,
+      format_after_save = function(bufnr)
+        if not slow_format_filetypes[vim.bo[bufnr].filetype] then
+          return
+        end
+        return { lsp_format = 'fallback' }
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
         python = { 'isort', 'black' },
         javascript = { 'prettierd', 'prettier', stop_after_first = true },
         go = { 'goimports', 'gofmt' },
+        kotlin = { 'ktfmt' },
       },
     },
   },
@@ -268,17 +282,17 @@ return {
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
+      -- local statusline = require 'mini.statusline'
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      -- statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
       -- cursor location to LINE:COLUMN
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      -- ---@diagnostic disable-next-line: duplicate-set-field
+      -- statusline.section_location = function()
+      --   return '%2l:%-2v'
+      -- end
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
